@@ -16,10 +16,12 @@ class DiscoveryController extends ChangeNotifier {
   String? error;
   List<Movie> movies = const [];
   List<String> recentQueries = const [];
+  Set<int> savedMovieIds = <int>{};
   String lastQuery = '';
 
   Future<void> initialize() async {
     recentQueries = await _repository.loadRecentSearches();
+    savedMovieIds = await _repository.loadSavedMovieIds();
     notifyListeners();
     await loadTrending();
   }
@@ -75,5 +77,13 @@ class DiscoveryController extends ChangeNotifier {
     }
 
     await runSearch(mode, lastQuery);
+  }
+
+  bool isSaved(int movieId) => savedMovieIds.contains(movieId);
+
+  Future<void> toggleSaved(Movie movie) async {
+    await _repository.toggleSavedMovie(movie.id);
+    savedMovieIds = await _repository.loadSavedMovieIds();
+    notifyListeners();
   }
 }

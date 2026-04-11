@@ -3,9 +3,16 @@ import 'package:flutter/material.dart';
 import '../domain/movie.dart';
 
 class MovieDetailPage extends StatelessWidget {
-  const MovieDetailPage({super.key, required this.movie});
+  const MovieDetailPage({
+    super.key,
+    required this.movie,
+    required this.isSaved,
+    required this.onToggleSaved,
+  });
 
   final Movie movie;
+  final bool isSaved;
+  final VoidCallback onToggleSaved;
 
   @override
   Widget build(BuildContext context) {
@@ -86,6 +93,16 @@ class MovieDetailPage extends StatelessWidget {
                     'Overview',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton.icon(
+                    onPressed: onToggleSaved,
+                    icon: Icon(
+                      isSaved ? Icons.bookmark : Icons.bookmark_border,
+                    ),
+                    label: Text(
+                      isSaved ? 'Saved to your list' : 'Save to your list',
                     ),
                   ),
                   const SizedBox(height: 12),

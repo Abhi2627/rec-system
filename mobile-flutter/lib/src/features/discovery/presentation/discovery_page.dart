@@ -144,6 +144,41 @@ class _DiscoveryPageState extends State<DiscoveryPage> {
                     }).toList(),
                   ),
                 ],
+                if (_controller.savedMovieIds.isNotEmpty) ...[
+                  const SizedBox(height: 18),
+                  Text(
+                    'Saved movies in this session',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: _controller.movies
+                        .where((movie) => _controller.isSaved(movie.id))
+                        .map(
+                          (movie) => ActionChip(
+                            avatar: const Icon(Icons.bookmark, size: 18),
+                            label: Text(movie.title),
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) => MovieDetailPage(
+                                    movie: movie,
+                                    isSaved: _controller.isSaved(movie.id),
+                                    onToggleSaved: () =>
+                                        _controller.toggleSaved(movie),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ],
                 const SizedBox(height: 18),
                 _SectionHeader(mode: _controller.mode),
                 const SizedBox(height: 12),
@@ -162,10 +197,17 @@ class _DiscoveryPageState extends State<DiscoveryPage> {
                       padding: const EdgeInsets.only(bottom: 14),
                       child: _MovieCard(
                         movie: movie,
+                        isSaved: _controller.isSaved(movie.id),
+                        onToggleSaved: () => _controller.toggleSaved(movie),
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute<void>(
-                              builder: (_) => MovieDetailPage(movie: movie),
+                              builder: (_) => MovieDetailPage(
+                                movie: movie,
+                                isSaved: _controller.isSaved(movie.id),
+                                onToggleSaved: () =>
+                                    _controller.toggleSaved(movie),
+                              ),
                             ),
                           );
                         },
@@ -204,10 +246,17 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _MovieCard extends StatelessWidget {
-  const _MovieCard({required this.movie, required this.onTap});
+  const _MovieCard({
+    required this.movie,
+    required this.isSaved,
+    required this.onTap,
+    required this.onToggleSaved,
+  });
 
   final Movie movie;
+  final bool isSaved;
   final VoidCallback onTap;
+  final VoidCallback onToggleSaved;
 
   @override
   Widget build(BuildContext context) {
@@ -220,11 +269,25 @@ class _MovieCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                movie.title,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      movie.title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: onToggleSaved,
+                    tooltip: isSaved ? 'Remove from saved' : 'Save movie',
+                    icon: Icon(
+                      isSaved ? Icons.bookmark : Icons.bookmark_border,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               Wrap(
