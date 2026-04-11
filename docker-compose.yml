@@ -1,0 +1,27 @@
+services:
+  ai-service:
+    build:
+      context: ./ai-service
+    container_name: rec-system-ai
+    ports:
+      - "8001:8001"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  backend-node:
+    build:
+      context: ./backend-node
+    container_name: rec-system-backend
+    env_file:
+      - ./backend-node/.env
+    environment:
+      AI_SERVICE_URL: http://ai-service:8001
+    depends_on:
+      ai-service:
+        condition: service_healthy
+    ports:
+      - "8000:8000"

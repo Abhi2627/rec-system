@@ -16,6 +16,10 @@ class RerankRequest(BaseModel):
     movies: List[dict]
     top_k: Optional[int] = 10
 
+@app.get("/health")
+async def health_check():
+    return {"status": "OK", "service": "ai-service"}
+
 @app.post("/recommend")
 async def get_recommendations(request: QueryRequest):
     results = find_recommendations(request.query, request.top_k)
