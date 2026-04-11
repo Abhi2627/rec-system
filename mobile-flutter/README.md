@@ -1,17 +1,35 @@
 # mobile_flutter
 
-A new Flutter project.
+Flutter client for the Rec System project.
 
-## Getting Started
+## Features
 
-This project is a starting point for a Flutter application.
+- Trending movies
+- AI semantic search
+- TMDB smart search
+- Saved movies
+- Recent searches
 
-A few resources to get you started if this is your first Flutter project:
+## Run
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+```bash
+flutter pub get
+flutter run
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## API Base URL
+
+Default behavior:
+- Android emulator: `http://10.0.2.2:8000`
+- iOS simulator / local host: `http://127.0.0.1:8000`
+
+Override for a physical device:
+
+```bash
+flutter run --dart-define=API_BASE_URL=http://YOUR_MAC_IP:8000
+```
+
+## Main App Files
+
+- `lib/src/app.dart`
+- `lib/src/features/discovery/`
