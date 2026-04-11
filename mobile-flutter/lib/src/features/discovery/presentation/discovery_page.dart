@@ -83,6 +83,14 @@ class _DiscoveryPageState extends State<DiscoveryPage> {
                   ),
                 ),
                 const SizedBox(height: 20),
+                _ModeSummaryCard(
+                  mode: widget.controller.mode,
+                  loading: widget.controller.loading,
+                  error: widget.controller.error,
+                  movieCount: widget.controller.movies.length,
+                  savedCount: widget.controller.savedMovies.length,
+                ),
+                const SizedBox(height: 16),
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(18),
@@ -181,14 +189,14 @@ class _DiscoveryPageState extends State<DiscoveryPage> {
                 _SectionHeader(mode: widget.controller.mode),
                 const SizedBox(height: 12),
                 if (widget.controller.loading)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 32),
-                    child: Center(child: CircularProgressIndicator()),
-                  )
+                  const _LoadingCard()
                 else if (widget.controller.error != null)
-                  _ErrorCard(message: widget.controller.error!)
+                  _ErrorCard(
+                    message: widget.controller.error!,
+                    onRetry: widget.controller.refresh,
+                  )
                 else if (widget.controller.movies.isEmpty)
-                  const _EmptyCard()
+                  _EmptyCard(mode: widget.controller.mode)
                 else
                   ...widget.controller.movies.map(
                     (movie) => Padding(
@@ -205,6 +213,87 @@ class _DiscoveryPageState extends State<DiscoveryPage> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ModeSummaryCard extends StatelessWidget {
+  const _ModeSummaryCard({
+    required this.mode,
+    required this.loading,
+    required this.error,
+    required this.movieCount,
+    required this.savedCount,
+  });
+
+  final DiscoveryMode mode;
+  final bool loading;
+  final String? error;
+  final int movieCount;
+  final int savedCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final title = switch (mode) {
+      DiscoveryMode.trending => 'Discovery pulse',
+      DiscoveryMode.semanticSearch => 'Semantic match run',
+      DiscoveryMode.smartSearch => 'TMDB smart rerank',
+    };
+
+    final description = error != null
+        ? 'Something interrupted the last request. Pull to refresh or retry below.'
+        : loading
+        ? 'Fetching titles and refreshing your view.'
+        : '$movieCount movies ready. $savedCount saved for later.';
+
+    return Card(
+      color: const Color(0xFF201A17),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: const Color(0xFFB2451E),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(
+                error != null
+                    ? Icons.warning_amber_rounded
+                    : loading
+                    ? Icons.sync
+                    : Icons.movie_filter_outlined,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    description,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: const Color(0xFFE9D8C6),
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -229,6 +318,35 @@ class _SectionHeader extends StatelessWidget {
       style: Theme.of(
         context,
       ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+    );
+  }
+}
+
+class _LoadingCard extends StatelessWidget {
+  const _LoadingCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(22),
+        child: Row(
+          children: [
+            const SizedBox(
+              width: 28,
+              height: 28,
+              child: CircularProgressIndicator(strokeWidth: 3),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                'Fetching the next set of movie results for you...',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -338,9 +456,10 @@ class _MetaChip extends StatelessWidget {
 }
 
 class _ErrorCard extends StatelessWidget {
-  const _ErrorCard({required this.message});
+  const _ErrorCard({required this.message, required this.onRetry});
 
   final String message;
+  final Future<void> Function() onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -348,11 +467,30 @@ class _ErrorCard extends StatelessWidget {
       color: const Color(0xFFFFF1EC),
       child: Padding(
         padding: const EdgeInsets.all(18),
-        child: Text(
-          message,
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF7A2E1C)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Request failed',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: const Color(0xFF7A2E1C),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF7A2E1C)),
+            ),
+            const SizedBox(height: 14),
+            OutlinedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
+            ),
+          ],
         ),
       ),
     );
@@ -360,17 +498,25 @@ class _ErrorCard extends StatelessWidget {
 }
 
 class _EmptyCard extends StatelessWidget {
-  const _EmptyCard();
+  const _EmptyCard({required this.mode});
+
+  final DiscoveryMode mode;
 
   @override
   Widget build(BuildContext context) {
+    final message = switch (mode) {
+      DiscoveryMode.trending =>
+        'No trending titles are available right now. Try refreshing in a moment.',
+      DiscoveryMode.semanticSearch =>
+        'No semantic matches yet. Try a more descriptive mood, genre, or theme.',
+      DiscoveryMode.smartSearch =>
+        'TMDB smart search returned no results. Try a movie title, actor, or franchise name.',
+    };
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(18),
-        child: Text(
-          'No movies found for this request yet.',
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
+        child: Text(message, style: Theme.of(context).textTheme.bodyMedium),
       ),
     );
   }
