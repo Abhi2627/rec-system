@@ -120,9 +120,10 @@ Working now:
 - Flutter discovery client
 - saved movies
 - Docker setup
+- backend route tests for health, validation, trending, and smart-search
 
 Still to do:
-- automated backend and AI tests
+- broader backend and AI test coverage
 - better recommendation persistence/indexing
 - auth and user accounts
 - database-backed personalization
