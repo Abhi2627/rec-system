@@ -5,28 +5,26 @@ import 'discovery_controller.dart';
 import 'movie_detail_page.dart';
 
 class DiscoveryPage extends StatefulWidget {
-  const DiscoveryPage({super.key});
+  const DiscoveryPage({super.key, required this.controller});
+
+  final DiscoveryController controller;
 
   @override
   State<DiscoveryPage> createState() => _DiscoveryPageState();
 }
 
 class _DiscoveryPageState extends State<DiscoveryPage> {
-  late final DiscoveryController _controller;
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _controller = DiscoveryController()..addListener(_onControllerChanged);
-    _controller.initialize();
+    widget.controller.addListener(_onControllerChanged);
   }
 
   @override
   void dispose() {
-    _controller
-      ..removeListener(_onControllerChanged)
-      ..dispose();
+    widget.controller.removeListener(_onControllerChanged);
     _searchController.dispose();
     super.dispose();
   }
@@ -38,7 +36,19 @@ class _DiscoveryPageState extends State<DiscoveryPage> {
   }
 
   Future<void> _runSearch(DiscoveryMode mode) async {
-    await _controller.runSearch(mode, _searchController.text);
+    await widget.controller.runSearch(mode, _searchController.text);
+  }
+
+  void _openMovie(Movie movie) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => MovieDetailPage(
+          movie: movie,
+          isSaved: widget.controller.isSaved(movie.id),
+          onToggleSaved: () => widget.controller.toggleSaved(movie),
+        ),
+      ),
+    );
   }
 
   @override
@@ -54,7 +64,7 @@ class _DiscoveryPageState extends State<DiscoveryPage> {
         ),
         child: SafeArea(
           child: RefreshIndicator(
-            onRefresh: _controller.refresh,
+            onRefresh: widget.controller.refresh,
             child: ListView(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
               children: [
@@ -96,7 +106,7 @@ class _DiscoveryPageState extends State<DiscoveryPage> {
                           runSpacing: 10,
                           children: [
                             FilledButton(
-                              onPressed: _controller.loading
+                              onPressed: widget.controller.loading
                                   ? null
                                   : () => _runSearch(
                                       DiscoveryMode.semanticSearch,
@@ -104,15 +114,15 @@ class _DiscoveryPageState extends State<DiscoveryPage> {
                               child: const Text('AI Search'),
                             ),
                             FilledButton.tonal(
-                              onPressed: _controller.loading
+                              onPressed: widget.controller.loading
                                   ? null
                                   : () => _runSearch(DiscoveryMode.smartSearch),
                               child: const Text('Smart Search'),
                             ),
                             OutlinedButton(
-                              onPressed: _controller.loading
+                              onPressed: widget.controller.loading
                                   ? null
-                                  : _controller.loadTrending,
+                                  : widget.controller.loadTrending,
                               child: const Text('Trending'),
                             ),
                           ],
@@ -121,7 +131,7 @@ class _DiscoveryPageState extends State<DiscoveryPage> {
                     ),
                   ),
                 ),
-                if (_controller.recentQueries.isNotEmpty) ...[
+                if (widget.controller.recentQueries.isNotEmpty) ...[
                   const SizedBox(height: 14),
                   Text(
                     'Recent searches',
@@ -133,7 +143,7 @@ class _DiscoveryPageState extends State<DiscoveryPage> {
                   Wrap(
                     spacing: 10,
                     runSpacing: 10,
-                    children: _controller.recentQueries.map((query) {
+                    children: widget.controller.recentQueries.map((query) {
                       return ActionChip(
                         label: Text(query),
                         onPressed: () {
@@ -144,10 +154,10 @@ class _DiscoveryPageState extends State<DiscoveryPage> {
                     }).toList(),
                   ),
                 ],
-                if (_controller.savedMovieIds.isNotEmpty) ...[
+                if (widget.controller.savedMovies.isNotEmpty) ...[
                   const SizedBox(height: 18),
                   Text(
-                    'Saved movies in this session',
+                    'Saved highlights',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -156,61 +166,39 @@ class _DiscoveryPageState extends State<DiscoveryPage> {
                   Wrap(
                     spacing: 10,
                     runSpacing: 10,
-                    children: _controller.movies
-                        .where((movie) => _controller.isSaved(movie.id))
-                        .map(
-                          (movie) => ActionChip(
-                            avatar: const Icon(Icons.bookmark, size: 18),
-                            label: Text(movie.title),
-                            onPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute<void>(
-                                  builder: (_) => MovieDetailPage(
-                                    movie: movie,
-                                    isSaved: _controller.isSaved(movie.id),
-                                    onToggleSaved: () =>
-                                        _controller.toggleSaved(movie),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        )
-                        .toList(),
+                    children: widget.controller.savedMovies.take(4).map((
+                      movie,
+                    ) {
+                      return ActionChip(
+                        avatar: const Icon(Icons.bookmark, size: 18),
+                        label: Text(movie.title),
+                        onPressed: () => _openMovie(movie),
+                      );
+                    }).toList(),
                   ),
                 ],
                 const SizedBox(height: 18),
-                _SectionHeader(mode: _controller.mode),
+                _SectionHeader(mode: widget.controller.mode),
                 const SizedBox(height: 12),
-                if (_controller.loading)
+                if (widget.controller.loading)
                   const Padding(
                     padding: EdgeInsets.only(top: 32),
                     child: Center(child: CircularProgressIndicator()),
                   )
-                else if (_controller.error != null)
-                  _ErrorCard(message: _controller.error!)
-                else if (_controller.movies.isEmpty)
+                else if (widget.controller.error != null)
+                  _ErrorCard(message: widget.controller.error!)
+                else if (widget.controller.movies.isEmpty)
                   const _EmptyCard()
                 else
-                  ..._controller.movies.map(
+                  ...widget.controller.movies.map(
                     (movie) => Padding(
                       padding: const EdgeInsets.only(bottom: 14),
                       child: _MovieCard(
                         movie: movie,
-                        isSaved: _controller.isSaved(movie.id),
-                        onToggleSaved: () => _controller.toggleSaved(movie),
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => MovieDetailPage(
-                                movie: movie,
-                                isSaved: _controller.isSaved(movie.id),
-                                onToggleSaved: () =>
-                                    _controller.toggleSaved(movie),
-                              ),
-                            ),
-                          );
-                        },
+                        isSaved: widget.controller.isSaved(movie.id),
+                        onToggleSaved: () =>
+                            widget.controller.toggleSaved(movie),
+                        onTap: () => _openMovie(movie),
                       ),
                     ),
                   ),

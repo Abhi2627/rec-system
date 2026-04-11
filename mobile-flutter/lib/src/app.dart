@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'features/discovery/presentation/discovery_controller.dart';
 import 'features/discovery/presentation/discovery_page.dart';
+import 'features/discovery/presentation/saved_movies_page.dart';
 
 class RecSystemApp extends StatelessWidget {
   const RecSystemApp({super.key});
@@ -43,7 +45,63 @@ class RecSystemApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const DiscoveryPage(),
+      home: const AppShell(),
+    );
+  }
+}
+
+class AppShell extends StatefulWidget {
+  const AppShell({super.key});
+
+  @override
+  State<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends State<AppShell> {
+  late final DiscoveryController _controller;
+  int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = DiscoveryController()..initialize();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final pages = [
+      DiscoveryPage(controller: _controller),
+      SavedMoviesPage(controller: _controller),
+    ];
+
+    return Scaffold(
+      body: IndexedStack(index: _currentIndex, children: pages),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _currentIndex,
+        onDestinationSelected: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.explore_outlined),
+            selectedIcon: Icon(Icons.explore),
+            label: 'Discover',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.bookmark_border),
+            selectedIcon: Icon(Icons.bookmark),
+            label: 'Saved',
+          ),
+        ],
+      ),
     );
   }
 }

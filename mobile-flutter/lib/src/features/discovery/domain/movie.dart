@@ -28,4 +28,16 @@ class Movie {
       score: (json['score'] as num?)?.toDouble(),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'overview': overview,
+      'poster_path': posterPath,
+      'release_date': releaseDate,
+      'vote_average': voteAverage,
+      'score': score,
+    };
+  }
 }

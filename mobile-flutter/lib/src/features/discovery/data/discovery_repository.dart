@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../domain/movie.dart';
@@ -7,7 +9,7 @@ class DiscoveryRepository {
   DiscoveryRepository({DiscoveryApi? api}) : _api = api ?? DiscoveryApi();
 
   static const _recentSearchesKey = 'recent_searches';
-  static const _savedMovieIdsKey = 'saved_movie_ids';
+  static const _savedMoviesKey = 'saved_movies';
   final DiscoveryApi _api;
 
   Future<List<Movie>> fetchTrending() => _api.fetchTrending();
@@ -36,25 +38,28 @@ class DiscoveryRepository {
     await prefs.setStringList(_recentSearchesKey, next);
   }
 
-  Future<Set<int>> loadSavedMovieIds() async {
+  Future<List<Movie>> loadSavedMovies() async {
     final prefs = await SharedPreferences.getInstance();
-    final values = prefs.getStringList(_savedMovieIdsKey) ?? <String>[];
-    return values.map(int.parse).toSet();
+    final values = prefs.getStringList(_savedMoviesKey) ?? <String>[];
+    return values
+        .map((item) => Movie.fromJson(jsonDecode(item) as Map<String, dynamic>))
+        .toList();
   }
 
-  Future<void> toggleSavedMovie(int movieId) async {
+  Future<void> toggleSavedMovie(Movie movie) async {
     final prefs = await SharedPreferences.getInstance();
-    final current = await loadSavedMovieIds();
+    final current = await loadSavedMovies();
+    final alreadySaved = current.any((item) => item.id == movie.id);
 
-    if (current.contains(movieId)) {
-      current.remove(movieId);
+    if (alreadySaved) {
+      current.removeWhere((item) => item.id == movie.id);
     } else {
-      current.add(movieId);
+      current.insert(0, movie);
     }
 
     await prefs.setStringList(
-      _savedMovieIdsKey,
-      current.map((id) => id.toString()).toList(),
+      _savedMoviesKey,
+      current.map((item) => jsonEncode(item.toJson())).toList(),
     );
   }
 }
