@@ -33,12 +33,57 @@ export const getTrendingMovies = async (): Promise<Movie[]> => {
             id: m.id,
             title: m.title,
             overview: m.overview,
-            poster_path: `https://image.tmdb.org/t/p/w500${m.poster_path}`,
+            poster_path: m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : '',
             release_date: m.release_date,
             vote_average: m.vote_average
         }));
-    } catch (error) {
-        console.error("Error in MovieService:", error);
+    } catch (error: any) {
+        if (error.response) {
+            console.error("TMDB API Error (Trending):", error.response.status, error.response.data);
+        } else {
+            console.error("Error in MovieService (Trending):", error.message);
+        }
+        throw error;
+    }
+};
+
+export const getDeepDiscovery = async (query: string): Promise<Movie[]> => {
+    const token = process.env.TMDB_TOKEN;
+
+    if (!token) {
+        throw new Error("TMDB_TOKEN is missing in .env file");
+    }
+
+    try {
+        const pages = [1, 2, 3];
+        const requests = pages.map(page => 
+            axios.get(`${TMDB_BASE_URL}/search/movie`, {
+                params: { query, page },
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: 'application/json'
+                }
+            })
+        );
+
+        const responses = await Promise.all(requests);
+        const combinedResults = responses.flatMap(res => res.data.results);
+        console.log(`Fetched ${combinedResults.length} movies from TMDB for query: ${query}`);
+
+        return combinedResults.map((m: any) => ({
+            id: m.id,
+            title: m.title,
+            overview: m.overview,
+            poster_path: m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : '',
+            release_date: m.release_date,
+            vote_average: m.vote_average
+        }));
+    } catch (error: any) {
+        if (error.response) {
+            console.error("TMDB API Error (DeepDiscovery):", error.response.status, error.response.data);
+        } else {
+            console.error("Error in MovieService (DeepDiscovery):", error.message);
+        }
         throw error;
     }
 };
