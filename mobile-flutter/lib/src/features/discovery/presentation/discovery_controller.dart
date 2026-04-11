@@ -1,20 +1,28 @@
 import 'package:flutter/foundation.dart';
 
-import '../data/discovery_api.dart';
+import '../data/discovery_repository.dart';
 import '../domain/movie.dart';
 
 enum DiscoveryMode { trending, semanticSearch, smartSearch }
 
 class DiscoveryController extends ChangeNotifier {
-  DiscoveryController({DiscoveryApi? api}) : _api = api ?? DiscoveryApi();
+  DiscoveryController({DiscoveryRepository? repository})
+    : _repository = repository ?? DiscoveryRepository();
 
-  final DiscoveryApi _api;
+  final DiscoveryRepository _repository;
 
   DiscoveryMode mode = DiscoveryMode.trending;
   bool loading = true;
   String? error;
   List<Movie> movies = const [];
+  List<String> recentQueries = const [];
   String lastQuery = '';
+
+  Future<void> initialize() async {
+    recentQueries = await _repository.loadRecentSearches();
+    notifyListeners();
+    await loadTrending();
+  }
 
   Future<void> loadTrending() async {
     mode = DiscoveryMode.trending;
@@ -23,7 +31,7 @@ class DiscoveryController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      movies = await _api.fetchTrending();
+      movies = await _repository.fetchTrending();
     } catch (err) {
       error = err.toString();
     } finally {
@@ -47,9 +55,11 @@ class DiscoveryController extends ChangeNotifier {
     notifyListeners();
 
     try {
+      await _repository.saveRecentSearch(trimmedQuery);
+      recentQueries = await _repository.loadRecentSearches();
       movies = nextMode == DiscoveryMode.smartSearch
-          ? await _api.smartSearch(trimmedQuery)
-          : await _api.searchRecommendations(trimmedQuery);
+          ? await _repository.smartSearch(trimmedQuery)
+          : await _repository.searchRecommendations(trimmedQuery);
     } catch (err) {
       error = err.toString();
     } finally {

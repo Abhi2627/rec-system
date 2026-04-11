@@ -19,7 +19,7 @@ class _DiscoveryPageState extends State<DiscoveryPage> {
   void initState() {
     super.initState();
     _controller = DiscoveryController()..addListener(_onControllerChanged);
-    _controller.loadTrending();
+    _controller.initialize();
   }
 
   @override
@@ -121,6 +121,29 @@ class _DiscoveryPageState extends State<DiscoveryPage> {
                     ),
                   ),
                 ),
+                if (_controller.recentQueries.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  Text(
+                    'Recent searches',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: _controller.recentQueries.map((query) {
+                      return ActionChip(
+                        label: Text(query),
+                        onPressed: () {
+                          _searchController.text = query;
+                          _runSearch(DiscoveryMode.semanticSearch);
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ],
                 const SizedBox(height: 18),
                 _SectionHeader(mode: _controller.mode),
                 const SizedBox(height: 12),
