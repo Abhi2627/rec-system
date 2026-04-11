@@ -117,6 +117,7 @@ Services:
 Working now:
 - recommendation API flow
 - TMDB-backed discovery routes
+- AI service route tests for health, recommend, and rerank
 - Flutter discovery client
 - saved movies
 - Docker setup
