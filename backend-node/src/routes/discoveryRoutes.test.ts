@@ -13,10 +13,19 @@ test('GET /health returns OK', async () => {
   assert.equal(response.body.status, 'OK');
 });
 
-test('GET /api/discovery/search validates query parameter', async () => {
+test('GET /api/discovery/smart-search requires query parameter', async () => {
   const app = createApp();
 
-  const response = await request(app).get('/api/discovery/search');
+  const response = await request(app).get('/api/discovery/smart-search');
+
+  assert.equal(response.status, 400);
+  assert.equal(response.body.error, 'Search query is required');
+});
+
+test('GET /api/discovery/smart-search rejects empty query', async () => {
+  const app = createApp();
+
+  const response = await request(app).get('/api/discovery/smart-search?q=');
 
   assert.equal(response.status, 400);
   assert.equal(response.body.error, 'Search query is required');
@@ -34,9 +43,6 @@ test('GET /api/discovery/trending returns movie payload', async () => {
         vote_average: 7.5,
       },
     ],
-    getDeepDiscovery: async () => [],
-    getAIRecommendations: async () => ({ query: '', recommendations: [] }),
-    rerankMovies: async () => ({ query: '', results: [] }),
   });
   const app = createApp(router);
 
@@ -61,7 +67,6 @@ test('GET /api/discovery/smart-search reranks TMDB candidates', async () => {
   const router = createDiscoveryRouter({
     getTrendingMovies: async () => [],
     getDeepDiscovery: async () => rawMovies,
-    getAIRecommendations: async () => ({ query: '', recommendations: [] }),
     rerankMovies: async () => ({
       query: 'space',
       results: [{ ...rawMovies[0], score: 0.9 }],
@@ -72,6 +77,31 @@ test('GET /api/discovery/smart-search reranks TMDB candidates', async () => {
   const response = await request(app).get('/api/discovery/smart-search?q=space');
 
   assert.equal(response.status, 200);
-  assert.equal(response.body.results[0].title, 'Interstellar');
-  assert.equal(response.body.results[0].score, 0.9);
+  assert.equal(response.body.source, 'tmdb+ai-rerank');
+  assert.equal((response.body.results as { title: string }[])[0].title, 'Interstellar');
+});
+
+test('GET /api/discovery/smart-search falls back to TMDB when AI service fails', async () => {
+  const rawMovies = [
+    {
+      id: 10,
+      title: 'Interstellar',
+      overview: 'Space exploration',
+      poster_path: '',
+      release_date: '2014-11-07',
+      vote_average: 8.6,
+    },
+  ];
+
+  const router = createDiscoveryRouter({
+    getDeepDiscovery: async () => rawMovies,
+    rerankMovies: async () => { throw new Error('AI service unreachable'); },
+  });
+  const app = createApp(router);
+
+  const response = await request(app).get('/api/discovery/smart-search?q=space');
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.source, 'tmdb-fallback');
+  assert.equal((response.body.results as { title: string }[])[0].title, 'Interstellar');
 });

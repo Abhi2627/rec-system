@@ -3,3 +3,7 @@ uvicorn==0.39.0
 pandas==2.3.3
 numpy==2.0.2
 sentence-transformers==5.1.2
+
+# Dev / test dependencies
+pytest==8.3.5
+httpx==0.28.1

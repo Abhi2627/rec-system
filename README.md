@@ -40,6 +40,7 @@ Then set:
 
 - `TMDB_TOKEN`: your TMDB bearer token
 - `AI_SERVICE_URL`: use `http://localhost:8001` for local native runs
+- `AUTH_SECRET`: a long random string for signing auth tokens
 
 ## Local Run: Native
 
@@ -52,6 +53,7 @@ python3 main.py
 ```
 
 The first startup may take time because embeddings are generated from `movies.csv`.
+After that, the AI service reuses a cached embedding index from `ai-service/models/` until the dataset changes.
 
 ### 2. Start the Node backend
 
@@ -99,8 +101,17 @@ Services:
 ## Key Endpoints
 
 - `GET /api/discovery/trending`
-- `GET /api/discovery/search?q=space%20adventure`
-- `GET /api/discovery/smart-search?q=interstellar`
+- `GET /api/discovery/smart-search?q=space%20adventure`
+- `GET /api/discovery/ai-recommend?q=interstellar`
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `GET /api/auth/me`
+- `GET /api/personalization/profile`
+- `PUT /api/personalization/profile`
+- `POST /api/personalization/saved-movies`
+- `DELETE /api/personalization/saved-movies/:movieId`
+- `POST /api/personalization/search-history`
+- `POST /api/personalization/recommendations`
 - `POST /recommend`
 - `POST /rerank`
 
@@ -122,10 +133,10 @@ Working now:
 - saved movies
 - Docker setup
 - backend route tests for health, validation, trending, and smart-search
+- backend auth routes for register, login, and current-user lookup
+- SQLite-backed personalization for preferences, saved movies, and search history
 
 Still to do:
 - broader backend and AI test coverage
-- better recommendation persistence/indexing
-- auth and user accounts
-- database-backed personalization
+- persistent embedding cache for faster AI service restarts
 - deployment and CI/CD

@@ -1,15 +1,41 @@
-# Node.js
+# ── Node.js ───────────────────────────────────────────────────────────────────
 node_modules/
 dist/
 .env
 
-# Python
+# ── Python ────────────────────────────────────────────────────────────────────
 venv/
 __pycache__/
 *.pyc
+*.pyo
 .ipynb_checkpoints/
+ai-service/models/movie_embeddings.npy
+ai-service/models/movie_embeddings.meta.json
+ai-service/.pytest_cache/
+
+# ── Data files ────────────────────────────────────────────────────────────────
 data/*.csv
 data/*.zip
+# SQLite databases contain user data — never commit
+data/*.db
 
-# OS
+# ── Android ───────────────────────────────────────────────────────────────────
+mobile-kotlin/.gradle/
+mobile-kotlin/build/
+mobile-kotlin/app/build/
+mobile-kotlin/local.properties
+mobile-kotlin/.idea/
+mobile-kotlin/**/.DS_Store
+mobile-kotlin/app/release/
+*.apk
+*.aab
+*.keystore
+*.jks
+
+# ── OS ────────────────────────────────────────────────────────────────────────
 .DS_Store
+Thumbs.db
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.vscode/
+*.swp

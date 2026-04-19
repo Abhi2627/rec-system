@@ -1,0 +1,106 @@
+package com.example.recsystem.ui.components
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.example.recsystem.data.model.Movie
+
+@Composable
+fun MovieGridCard(movie: Movie, onClick: () -> Unit = {}) {
+    Column(
+        modifier = Modifier
+            .width(120.dp)
+            .clickable { onClick() },
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // ── Poster ────────────────────────────────────────────────────────
+        Card(
+            shape = RoundedCornerShape(8.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(2f / 3f)
+        ) {
+            if (movie.posterPath.isNotEmpty()) {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(movie.posterPath)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = movie.title,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                // Placeholder when poster URL is empty or image fails
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color(0xFF2C2C3E)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = movie.title.take(2).uppercase(),
+                        color = Color.White.copy(alpha = 0.7f),
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(5.dp))
+
+        // ── Title — always 2 lines, always dark ───────────────────────────
+        Text(
+            text = movie.title,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 11.sp,
+            color = Color(0xFF1A1A1A),   // always dark regardless of theme
+            maxLines = 2,
+            minLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
+            lineHeight = 15.sp,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        // ── Rating ────────────────────────────────────────────────────────
+        if (movie.voteAverage > 0.0) {
+            Spacer(modifier = Modifier.height(2.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(text = "\u2605", color = Color(0xFFFFC107), fontSize = 10.sp)
+                Spacer(modifier = Modifier.width(2.dp))
+                Text(
+                    text = String.format("%.1f", movie.voteAverage),
+                    fontSize = 10.sp,
+                    color = Color(0xFF444444),   // dark grey — always readable
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        } else {
+            Spacer(modifier = Modifier.height(14.dp))
+        }
+    }
+}
