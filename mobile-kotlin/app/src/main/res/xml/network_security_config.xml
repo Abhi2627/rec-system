@@ -1,8 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Permits cleartext HTTP to local development hosts only.
+    YouTube domains use HTTPS so they don't need to be listed here —
+    but they do need to not be blocked. The cleartextTrafficPermitted=false
+    default for unlisted domains is fine; HTTPS traffic is always allowed.
+-->
 <network-security-config>
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="false">10.0.2.2</domain>
         <domain includeSubdomains="false">localhost</domain>
         <domain includeSubdomains="false">192.168.0.167</domain>
+    </domain-config>
+    <!-- YouTube IFrame API and thumbnails use HTTPS — always permitted -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">youtube.com</domain>
+        <domain includeSubdomains="true">ytimg.com</domain>
+        <domain includeSubdomains="true">googlevideo.com</domain>
     </domain-config>
 </network-security-config>

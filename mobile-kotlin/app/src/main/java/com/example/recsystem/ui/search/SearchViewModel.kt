@@ -11,11 +11,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 data class SearchUiState(
-    val query: String = "",
-    val results: List<Movie> = emptyList(),
-    val isLoading: Boolean = false,
-    val error: String? = null,
-    val hasSearched: Boolean = false
+    val query:      String       = "",
+    val results:    List<Movie>  = emptyList(),
+    val trending:   List<Movie>  = emptyList(),   // shown in poster grid before any search
+    val isLoading:  Boolean      = false,
+    val error:      String?      = null,
+    val hasSearched: Boolean     = false
 )
 
 class SearchViewModel(private val repository: DiscoveryRepository) : ViewModel() {
@@ -25,15 +26,26 @@ class SearchViewModel(private val repository: DiscoveryRepository) : ViewModel()
 
     private var searchJob: Job? = null
 
-    /** Called on every keystroke. Debounces 500 ms before firing. */
+    init { loadTrending() }
+
+    private fun loadTrending() {
+        viewModelScope.launch {
+            runCatching {
+                val movies = repository.fetchTrendingMovies()
+                _uiState.value = _uiState.value.copy(trending = movies)
+            }
+        }
+    }
+
+    /** Called on every keystroke — 400 ms debounce */
     fun onQueryChange(query: String) {
         _uiState.value = _uiState.value.copy(query = query, error = null)
 
         if (query.isBlank()) {
             searchJob?.cancel()
             _uiState.value = _uiState.value.copy(
-                results = emptyList(),
-                isLoading = false,
+                results     = emptyList(),
+                isLoading   = false,
                 hasSearched = false
             )
             return
@@ -41,12 +53,12 @@ class SearchViewModel(private val repository: DiscoveryRepository) : ViewModel()
 
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
-            delay(500)
+            delay(400)
             performSearch(query.trim())
         }
     }
 
-    /** Called when the user taps the search button / keyboard action. Fires immediately. */
+    /** Called when user taps the keyboard Search action — fires immediately */
     fun search(query: String = _uiState.value.query) {
         searchJob?.cancel()
         searchJob = viewModelScope.launch { performSearch(query.trim()) }
@@ -61,13 +73,19 @@ class SearchViewModel(private val repository: DiscoveryRepository) : ViewModel()
         } catch (e: Exception) {
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
-                error = "Search failed: ${e.message}"
+                error = "Search failed. Check your connection."
             )
         }
     }
 
     fun clearSearch() {
         searchJob?.cancel()
-        _uiState.value = SearchUiState()
+        _uiState.value = _uiState.value.copy(
+            query       = "",
+            results     = emptyList(),
+            isLoading   = false,
+            hasSearched = false,
+            error       = null
+        )
     }
 }

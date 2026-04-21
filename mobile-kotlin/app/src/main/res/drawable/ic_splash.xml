@@ -1,0 +1,47 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Clapperboard body -->
+    <path
+        android:fillColor="#F7E3C8"
+        android:pathData="M20,50 L88,50 L88,86 Q88,90 84,90 L24,90 Q20,90 20,86 Z" />
+
+    <!-- Top clapper bar -->
+    <path
+        android:fillColor="#F7E3C8"
+        android:pathData="M18,38 L90,38 L90,52 L18,52 Z" />
+
+    <!-- Diagonal stripes (navy) — 5 stripes across the bar -->
+    <path android:fillColor="#1A1A2E" android:pathData="M18,38 L30,38 L24,52 L18,52 Z" />
+    <path android:fillColor="#1A1A2E" android:pathData="M36,38 L48,38 L42,52 L30,52 Z" />
+    <path android:fillColor="#1A1A2E" android:pathData="M54,38 L66,38 L60,52 L48,52 Z" />
+    <path android:fillColor="#1A1A2E" android:pathData="M72,38 L84,38 L78,52 L66,52 Z" />
+    <path android:fillColor="#1A1A2E" android:pathData="M84,38 L90,38 L90,44 L78,52 Z" />
+
+    <!-- Left film reel — centre (27, 70), radius 11 outer, 6 inner, 2 hub -->
+    <!-- Outer dark ring -->
+    <path android:fillColor="#1A1A2E"
+        android:pathData="M27,59 C33.1,59 38,63.9 38,70 C38,76.1 33.1,81 27,81 C20.9,81 16,76.1 16,70 C16,63.9 20.9,59 27,59 Z" />
+    <!-- Inner cream -->
+    <path android:fillColor="#F7E3C8"
+        android:pathData="M27,64 C30.3,64 33,66.7 33,70 C33,73.3 30.3,76 27,76 C23.7,76 21,73.3 21,70 C21,66.7 23.7,64 27,64 Z" />
+    <!-- Hub dark -->
+    <path android:fillColor="#1A1A2E"
+        android:pathData="M27,68 C28.1,68 29,68.9 29,70 C29,71.1 28.1,72 27,72 C25.9,72 25,71.1 25,70 C25,68.9 25.9,68 27,68 Z" />
+
+    <!-- Right film reel — centre (81, 70) -->
+    <path android:fillColor="#1A1A2E"
+        android:pathData="M81,59 C87.1,59 92,63.9 92,70 C92,76.1 87.1,81 81,81 C74.9,81 70,76.1 70,70 C70,63.9 74.9,59 81,59 Z" />
+    <path android:fillColor="#F7E3C8"
+        android:pathData="M81,64 C84.3,64 87,66.7 87,70 C87,73.3 84.3,76 81,76 C77.7,76 75,73.3 75,70 C75,66.7 77.7,64 81,64 Z" />
+    <path android:fillColor="#1A1A2E"
+        android:pathData="M81,68 C82.1,68 83,68.9 83,70 C83,71.1 82.1,72 81,72 C79.9,72 79,71.1 79,70 C79,68.9 79.9,68 81,68 Z" />
+
+    <!-- Play triangle (CineRed) centred in body -->
+    <path android:fillColor="#B2451E"
+        android:pathData="M46,62 L66,70 L46,78 Z" />
+
+</vector>

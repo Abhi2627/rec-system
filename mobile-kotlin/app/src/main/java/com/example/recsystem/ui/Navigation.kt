@@ -21,17 +21,12 @@ import com.example.recsystem.ui.discovery.DiscoveryScreen
 import com.example.recsystem.ui.discovery.DiscoveryViewModel
 import com.example.recsystem.ui.discovery.MovieDetailScreen
 import com.example.recsystem.ui.discovery.MovieDetailViewModel
+import com.example.recsystem.ui.onboarding.OnboardingScreen
 import com.example.recsystem.ui.profile.FullProfileScreen
 import com.example.recsystem.ui.profile.ProfileViewModel
 import com.example.recsystem.ui.search.SearchScreen
 import com.example.recsystem.ui.search.SearchViewModel
 
-// ── AppNavigator ──────────────────────────────────────────────────────────────
-//
-// Everyone lands on Discovery immediately — no login wall.
-// Discovery and Search are fully public.
-// Profile tab shows a soft login prompt when not signed in.
-//
 @Composable
 fun AppNavigator(
     authViewModel:        AuthViewModel,
@@ -49,21 +44,19 @@ fun AppNavigator(
     )
 }
 
-// ── Auth sub-graph (embedded in Profile tab when not signed in) ───────────────
-
 @Composable
 fun AuthNavGraph(
-    navController:    NavHostController,
-    authViewModel:    AuthViewModel,
+    navController:     NavHostController,
+    authViewModel:     AuthViewModel,
     onContinueAsGuest: (() -> Unit)? = null
 ) {
     NavHost(navController = navController, startDestination = "login") {
         composable("login") {
             LoginScreen(
-                viewModel           = authViewModel,
-                onLoginSuccess      = {},
+                viewModel            = authViewModel,
+                onLoginSuccess       = {},
                 onNavigateToRegister = { navController.navigate("register") },
-                onContinueAsGuest   = onContinueAsGuest
+                onContinueAsGuest    = onContinueAsGuest
             )
         }
         composable("register") {
@@ -76,8 +69,6 @@ fun AuthNavGraph(
         }
     }
 }
-
-// ── MainScreen ────────────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -93,11 +84,12 @@ fun MainScreen(
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-    val showBottomBar = currentRoute?.startsWith("details/") != true
+    val hideBottomBar = currentRoute?.startsWith("details/") == true ||
+                        currentRoute == "onboarding"
 
     Scaffold(
         bottomBar = {
-            if (showBottomBar) {
+            if (!hideBottomBar) {
                 NavigationBar(
                     containerColor = Color(0xFFF7E3C8),
                     contentColor   = Color.Black
@@ -124,7 +116,6 @@ fun MainScreen(
             startDestination = BottomNavItem.Dashboard.route,
             modifier         = Modifier.padding(innerPadding)
         ) {
-            // ── Public: Discovery ─────────────────────────────────────────
             composable(BottomNavItem.Dashboard.route) {
                 DiscoveryScreen(
                     viewModel    = discoveryViewModel,
@@ -132,7 +123,6 @@ fun MainScreen(
                 )
             }
 
-            // ── Public: Search ────────────────────────────────────────────
             composable(BottomNavItem.Search.route) {
                 SearchScreen(
                     viewModel    = searchViewModel,
@@ -140,7 +130,6 @@ fun MainScreen(
                 )
             }
 
-            // ── Gated: Profile ────────────────────────────────────────────
             composable(BottomNavItem.Profile.route) {
                 val authState by authViewModel.authState
                 if (authState is AuthState.Success) {
@@ -158,12 +147,45 @@ fun MainScreen(
                                 popUpTo(navController.graph.startDestinationId)
                                 launchSingleTop = true
                             }
+                        },
+                        onAuthSuccess     = {
+                            // After login/register: show onboarding if no genres set
+                            val profile = profileViewModel.uiState.value.profile
+                            if (profile?.favoriteGenres.isNullOrEmpty()) {
+                                navController.navigate("onboarding") {
+                                    launchSingleTop = true
+                                }
+                            }
                         }
                     )
                 }
             }
 
-            // ── Public: Movie / TV detail ─────────────────────────────────
+            // ── Onboarding — genre interest picker ────────────────────────
+            composable("onboarding") {
+                OnboardingScreen(
+                    onComplete = { selectedGenres ->
+                        profileViewModel.updatePreferences(
+                            displayName      = profileViewModel.uiState.value.profile?.displayName ?: "",
+                            age              = profileViewModel.uiState.value.profile?.age,
+                            favoriteGenres   = selectedGenres,
+                            favoriteKeywords = profileViewModel.uiState.value.profile?.favoriteKeywords ?: emptyList(),
+                            favoriteActors   = profileViewModel.uiState.value.profile?.favoriteActors ?: emptyList(),
+                            favoriteActresses = profileViewModel.uiState.value.profile?.favoriteActresses ?: emptyList(),
+                            favoriteDirectors = profileViewModel.uiState.value.profile?.favoriteDirectors ?: emptyList()
+                        )
+                        navController.navigate(BottomNavItem.Dashboard.route) {
+                            popUpTo("onboarding") { inclusive = true }
+                        }
+                    },
+                    onSkip = {
+                        navController.navigate(BottomNavItem.Dashboard.route) {
+                            popUpTo("onboarding") { inclusive = true }
+                        }
+                    }
+                )
+            }
+
             composable(
                 route     = "details/{type}/{id}",
                 arguments = listOf(
@@ -186,11 +208,20 @@ fun MainScreen(
     }
 }
 
-// ── GuestProfileScreen — soft prompt, no hard wall ───────────────────────────
-
 @Composable
-fun GuestProfileScreen(authViewModel: AuthViewModel, onContinueAsGuest: () -> Unit) {
+fun GuestProfileScreen(
+    authViewModel:     AuthViewModel,
+    onContinueAsGuest: () -> Unit,
+    onAuthSuccess:     () -> Unit = {}
+) {
     val authNavController = rememberNavController()
+    val authState by authViewModel.authState
+
+    // When auth succeeds inside this embedded nav, fire the callback
+    if (authState is AuthState.Success) {
+        onAuthSuccess()
+    }
+
     Surface(modifier = Modifier.fillMaxSize()) {
         AuthNavGraph(
             navController     = authNavController,

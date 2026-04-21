@@ -166,7 +166,7 @@ fun TrendingCarousel(movies: List<Movie>, onMovieClick: (String, String) -> Unit
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(240.dp)
+            .height(280.dp)   // taller — shows more of portrait poster
     ) {
         HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
             val movie = movies[page]
@@ -178,13 +178,14 @@ fun TrendingCarousel(movies: List<Movie>, onMovieClick: (String, String) -> Unit
                         onMovieClick(type, movie.id.toString())
                     }
             ) {
-                // Poster with a dark placeholder so the overlay text is always readable
+                // Use TopCenter alignment so face/title art at top of portrait poster is visible
                 if (movie.posterPath.isNotEmpty()) {
                     AsyncImage(
                         model = movie.posterPath,
                         contentDescription = movie.title,
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
+                        contentScale = ContentScale.Crop,
+                        alignment = Alignment.TopCenter
                     )
                 } else {
                     Box(
@@ -200,39 +201,45 @@ fun TrendingCarousel(movies: List<Movie>, onMovieClick: (String, String) -> Unit
                         )
                     }
                 }
-                // Gradient overlay
+                // Gradient — starts from 40% height so top third is clear
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(
                             Brush.verticalGradient(
-                                colors = listOf(Color.Transparent, Color(0xEE000000)),
-                                startY = 60f
+                                colorStops = arrayOf(
+                                    0.0f to Color.Transparent,
+                                    0.45f to Color.Transparent,
+                                    1.0f to Color(0xF2000000)
+                                )
                             )
                         )
                 )
-                // Title overlay — always white on dark gradient
+                // Title overlay at bottom — constrained width to avoid hitting dots
                 Column(
                     modifier = Modifier
                         .align(Alignment.BottomStart)
-                        .padding(16.dp)
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, end = 16.dp, bottom = 22.dp)
                 ) {
                     Text(
                         text = movie.title,
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        fontSize = 17.sp,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        lineHeight = 22.sp
                     )
                     if (movie.voteAverage > 0.0) {
+                        Spacer(Modifier.height(4.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("\u2605", color = Color(0xFFFFC107), fontSize = 13.sp)
+                            Text("\u2605", color = Color(0xFFFFC107), fontSize = 12.sp)
                             Spacer(Modifier.width(4.dp))
                             Text(
                                 text = String.format("%.1f", movie.voteAverage),
                                 color = Color.White,
-                                fontSize = 13.sp
+                                fontSize = 12.sp
                             )
                         }
                     }
@@ -240,21 +247,21 @@ fun TrendingCarousel(movies: List<Movie>, onMovieClick: (String, String) -> Unit
             }
         }
 
-        // Page dots
+        // Page dots — fixed at very bottom, above the title text
         Row(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 8.dp),
+                .padding(bottom = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(5.dp)
         ) {
             repeat(movies.size) { index ->
                 val isSelected = pagerState.currentPage == index
                 Box(
                     modifier = Modifier
-                        .size(if (isSelected) 8.dp else 5.dp)
+                        .size(if (isSelected) 7.dp else 4.dp)
                         .clip(CircleShape)
                         .background(
-                            if (isSelected) Color.White else Color.White.copy(alpha = 0.5f)
+                            if (isSelected) Color.White else Color.White.copy(alpha = 0.45f)
                         )
                 )
             }

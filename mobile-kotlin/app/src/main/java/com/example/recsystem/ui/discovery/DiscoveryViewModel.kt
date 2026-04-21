@@ -40,27 +40,41 @@ class DiscoveryViewModel(
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             try {
                 // All 6 requests fire in parallel — total time = slowest single request
-                val trendingMoviesD  = async { repository.fetchTrendingMovies() }
-                val trendingTVD      = async { repository.fetchTrendingTV() }
-                val actionD          = async { repository.fetchByCategory("movie", GENRE_ACTION) }
-                val comedyD          = async { repository.fetchByCategory("movie", GENRE_COMEDY) }
-                val thrillerD        = async { repository.fetchByCategory("movie", GENRE_THRILLER) }
-                val scifiD           = async { repository.fetchByCategory("movie", GENRE_SCIFI) }
+                val trendingMoviesD  = async { runCatching { repository.fetchTrendingMovies() }.getOrDefault(emptyList()) }
+                val trendingTVD      = async { runCatching { repository.fetchTrendingTV() }.getOrDefault(emptyList()) }
+                val actionD          = async { runCatching { repository.fetchByCategory("movie", GENRE_ACTION) }.getOrDefault(emptyList()) }
+                val comedyD          = async { runCatching { repository.fetchByCategory("movie", GENRE_COMEDY) }.getOrDefault(emptyList()) }
+                val thrillerD        = async { runCatching { repository.fetchByCategory("movie", GENRE_THRILLER) }.getOrDefault(emptyList()) }
+                val scifiD           = async { runCatching { repository.fetchByCategory("movie", GENRE_SCIFI) }.getOrDefault(emptyList()) }
 
-                _uiState.value = _uiState.value.copy(
-                    trendingMovies  = trendingMoviesD.await(),
-                    trendingTV      = trendingTVD.await(),
-                    actionMovies    = actionD.await(),
-                    comedyMovies    = comedyD.await(),
-                    thrillerMovies  = thrillerD.await(),
-                    scifiMovies     = scifiD.await(),
-                    isLoading       = false,
-                    error           = null
-                )
+                val trending  = trendingMoviesD.await()
+                val tv        = trendingTVD.await()
+                val action    = actionD.await()
+                val comedy    = comedyD.await()
+                val thriller  = thrillerD.await()
+                val scifi     = scifiD.await()
+
+                if (trending.isEmpty() && tv.isEmpty()) {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = "Could not connect to server. Make sure the backend is running."
+                    )
+                } else {
+                    _uiState.value = _uiState.value.copy(
+                        trendingMovies  = trending,
+                        trendingTV      = tv,
+                        actionMovies    = action,
+                        comedyMovies    = comedy,
+                        thrillerMovies  = thriller,
+                        scifiMovies     = scifi,
+                        isLoading       = false,
+                        error           = null
+                    )
+                }
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = "Could not load content. Check your connection and retry."
+                    error = "Could not connect to server. Make sure the backend is running."
                 )
             }
         }
