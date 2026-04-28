@@ -60,7 +60,7 @@ export const createDiscoveryRouter = (deps?: Partial<DiscoveryDependencies>) => 
   router.get('/category/:type/:genreId', async (req: Request, res: Response) => {
     const { type, genreId } = req.params;
     try {
-      const content = await movieService.getContentByGenre(type as 'movie' | 'tv', genreId ?? '');
+      const content = await movieService.getContentByGenre(type as 'movie' | 'tv', (genreId as string) ?? '');
       res.status(200).json(content);
     } catch (error: unknown) {
       res.status(500).json({ error: (error as Error).message });
@@ -122,7 +122,7 @@ export const createDiscoveryRouter = (deps?: Partial<DiscoveryDependencies>) => 
   router.get('/details/:type/:id', async (req: Request, res: Response) => {
     const { type, id } = req.params;
     try {
-      const result = await movieService.getMovieDetails(type as 'movie' | 'tv', id ?? '');
+      const result = await movieService.getMovieDetails(type as 'movie' | 'tv', (id as string) ?? '');
       res.status(200).json(result);
     } catch (error: unknown) {
       res.status(500).json({ error: (error as Error).message });

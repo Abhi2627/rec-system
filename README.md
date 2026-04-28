@@ -123,7 +123,3 @@ rec-system/
 ```
 
 ---
-
-## Resume Summary
-
-> Architected and shipped a full-stack AI-powered movie recommendation system comprising a **Kotlin/Jetpack Compose Android application**, a **Node.js/TypeScript REST API** with TMDB integration and SQLite-backed authentication, and a **Python/FastAPI AI microservice** using sentence-transformer embeddings for semantic search and personalised content re-ranking.

@@ -41,7 +41,7 @@ export const getAIRecommendations = async (
 
 export const rerankMovies = async (
   userQuery: string,
-  movies: Record<string, unknown>[],
+  movies: unknown[],
 ): Promise<AIRerankResponse> => {
   try {
     const response = await axios.post<AIRerankResponse>(
